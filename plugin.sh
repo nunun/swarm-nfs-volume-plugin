@@ -37,6 +37,10 @@ configure_compose_file() {
                 echo "      type: nfs4"                                  >> ${yaml_file}
                 echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"    >> ${yaml_file}
                 echo "      device: ${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}" >> ${yaml_file}
+
+                # NOTE
+                # remove directory manually if you want to uninstall.
+                mkdir -p "${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
         done
 }
 

@@ -1,0 +1,4 @@
+.running.yml
+.current.yml
+.local
+docker-compose.yml
