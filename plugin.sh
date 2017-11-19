@@ -19,7 +19,7 @@ configure_exports_file() {
                 fi
         fi
         sudo mkdir -pv "${SWARM_NFS_PLUGIN_EXPORT_DIR}"
-        sudo echo "${SWARM_NFS_PLUGIN_EXPORT_DIR} ${EXPORTS}" > "${EXPORTS_FILE}"
+        echo "${SWARM_NFS_PLUGIN_EXPORT_DIR} ${EXPORTS}" | sudo tee "${EXPORTS_FILE}"
 }
 
 on_install() {
