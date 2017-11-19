@@ -11,8 +11,12 @@ configure_exports_file() {
                 abort "environment vairable 'SWARM_NFS_PLUGIN_CLIENT_IP' is empty."
         fi
         EXPORTS=""
-        for a in ${SWARM_NFS_PLUGIN_CLIENT_IP}; do
-                EXPORTS="${EXPORTS} ${a}(rw,sync,no_subtree_check,no_root_squash)"
+        for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
+                EXPOETS="${EXPORTS}${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
+                for a in ${SWARM_NFS_PLUGIN_CLIENT_IP}; do
+                        EXPORTS="${EXPORTS} ${a}(rw,sync,no_subtree_check,no_root_squash)"
+                done
+                EXPORTS="${EXPORTS}\n"
         done
         if [ -f "${EXPORTS_FILE}" ]; then
                 if [ ! -f "${EXPORTS_BACKUP_FILE}" ]; then
@@ -22,21 +26,21 @@ configure_exports_file() {
                 fi
         fi
         sudo mkdir -pv "${SWARM_NFS_PLUGIN_EXPORT_DIR}"
-        echo "${SWARM_NFS_PLUGIN_EXPORT_DIR} ${EXPORTS}" | sudo tee "${EXPORTS_FILE}"
+        echo ${EXPORTS} | sudo tee "${EXPORTS_FILE}"
 }
 
 configure_compose_file() {
         local dir="${1}"
         local yaml_file="${dir}/docker-compose.yml"
-        echo "version: \"${SWARM_NFS_PLUGIN_COMPOSE_VERSION}\""          >  ${yaml_file}
-        echo "volumes: "                                                 >> ${yaml_file}
+        echo "version: \"${SWARM_NFS_PLUGIN_COMPOSE_VERSION}\""               >  ${yaml_file}
+        echo "volumes: "                                                      >> ${yaml_file}
         for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
-                echo "  ${v}:"                                           >> ${yaml_file}
-                echo "    driver: local"                                 >> ${yaml_file}
-                echo "    driver_opts:"                                  >> ${yaml_file}
-                echo "      type: nfs4"                                  >> ${yaml_file}
-                echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"    >> ${yaml_file}
-                echo "      device: ${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}" >> ${yaml_file}
+                echo "  ${v}:"                                                >> ${yaml_file}
+                echo "    driver: local"                                      >> ${yaml_file}
+                echo "    driver_opts:"                                       >> ${yaml_file}
+                echo "      type: nfs4"                                       >> ${yaml_file}
+                echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"         >> ${yaml_file}
+                echo "      device: \":${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}\"" >> ${yaml_file}
 
                 # NOTE
                 # remove directory manually if you want to uninstall.
