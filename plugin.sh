@@ -32,15 +32,15 @@ configure_exports_file() {
 configure_compose_file() {
         local dir="${1}"
         local yaml_file="${dir}/docker-compose.yml"
-        echo "version: \"${SWARM_NFS_PLUGIN_COMPOSE_VERSION}\""               >  ${yaml_file}
-        echo "volumes: "                                                      >> ${yaml_file}
+        echo "version: \"${SWARM_NFS_PLUGIN_COMPOSE_VERSION}\""                   >  ${yaml_file}
+        echo "volumes: "                                                          >> ${yaml_file}
         for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
-                echo "  ${v}:"                                                >> ${yaml_file}
-                echo "    driver: local"                                      >> ${yaml_file}
-                echo "    driver_opts:"                                       >> ${yaml_file}
-                echo "      type: nfs4"                                       >> ${yaml_file}
-                echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"         >> ${yaml_file}
-                echo "      device: \":${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}\"" >> ${yaml_file}
+                echo "  ${v}:"                                                    >> ${yaml_file}
+                echo "    driver: local"                                          >> ${yaml_file}
+                echo "    driver_opts:"                                           >> ${yaml_file}
+                echo "      type: nfs4"                                           >> ${yaml_file}
+                echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"             >> ${yaml_file}
+                echo "      device: \\\":${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}\\\"" >> ${yaml_file}
 
                 # NOTE
                 # remove directory manually if you want to uninstall.
