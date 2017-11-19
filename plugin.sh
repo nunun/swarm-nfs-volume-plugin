@@ -1,5 +1,9 @@
-SWARM_NFS_PLUGIN_CLIENT_IP_LIST="${SWARM_NFS_PLUGIN_CLIENT_IP_LIST:-"127.0.0.1"}"
+CWD=$(cd `dirname ${0}`; pwd)
+SWARM_NFS_PLUGIN_SERVER_IP="${SWARM_NFS_PLUGIN_SERVER_IP:-"127.0.0.1"}"
+SWARM_NFS_PLUGIN_CLIENT_IP="${SWARM_NFS_PLUGIN_CLIENT_IP:-"127.0.0.1"}"
+SWARM_NFS_PLUGIN_VOLUMES="${SWARM_NFS_PLUGIN_VOLUMES:-"nfs_volume"}"
 SWARM_NFS_PLUGIN_EXPORT_DIR="${SWARM_NFS_PLUGIN_EXPORT_DIR:-"/exports/swarm-nfs-plugin"}"
+SWARM_NFS_PLUGIN_COMPOSE_VERSION="3.0"
 EXPORTS_FILE="/etc/exports"
 EXPORTS_BACKUP_FILE="/etc/exports.bak"
 
@@ -22,10 +26,25 @@ configure_exports_file() {
         echo "${SWARM_NFS_PLUGIN_EXPORT_DIR} ${EXPORTS}" | sudo tee "${EXPORTS_FILE}"
 }
 
+configure_compose_file() {
+        local yaml_file="${CWD}/docker-compose.yml"
+        echo "version: ${SWARM_NFS_PLUGIN_COMPOSE_VERSION}"              >  ${yaml_file}
+        echo "volumes: "                                                 >> ${yaml_file}
+        for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
+                echo "  ${v}:"                                           >> ${yaml_file}
+                echo "    driver: local"                                 >> ${yaml_file}
+                echo "    driver_opts:"                                  >> ${yaml_file}
+                echo "      type: nfs4"                                  >> ${yaml_file}
+                echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"    >> ${yaml_file}
+                echo "      device: ${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}" >> ${yaml_file}
+        done
+}
+
 on_install() {
         echo "swarm-nfs-plugin: on_install"
         sudo apt-get install nfs-server
         configure_exports_file
+        configure_compose_file
         sudo /etc/init.d/nfs-kernel-server start
 }
 
@@ -38,5 +57,6 @@ on_uninstall() {
 on_update() {
         echo "swarm-plugin-test: on_update"
         configure_exports_file
+        configure_compose_file
         sudo /etc/init.d/nfs-kernel-server restart
 }
