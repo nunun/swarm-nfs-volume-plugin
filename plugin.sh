@@ -40,7 +40,7 @@ configure_compose_file() {
 
                 # NOTE
                 # remove directory manually if you want to uninstall.
-                mkdir -p "${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
+                sudo mkdir -p "${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
         done
 }
 
