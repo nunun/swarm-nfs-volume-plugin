@@ -12,11 +12,11 @@ configure_exports_file() {
         fi
         EXPORTS=""
         for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
-                EXPOETS="${EXPORTS}${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
+                EXPORTS="${EXPORTS}${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
                 for a in ${SWARM_NFS_PLUGIN_CLIENT_IP}; do
                         EXPORTS="${EXPORTS} ${a}(rw,sync,no_subtree_check,no_root_squash)"
                 done
-                EXPORTS="${EXPORTS}\n"
+                EXPORTS="${EXPORTS}"$'\n'
         done
         if [ -f "${EXPORTS_FILE}" ]; then
                 if [ ! -f "${EXPORTS_BACKUP_FILE}" ]; then
