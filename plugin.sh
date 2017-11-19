@@ -64,8 +64,13 @@ on_uninstall() {
 }
 
 on_update() {
-        echo "swarm-plugin-test: on_update"
+        echo "swarm-nfs-plugin: on_update"
         configure_exports_file
         configure_compose_file "${dir}"
         sudo /etc/init.d/nfs-kernel-server restart
+}
+
+on_compose() {
+        echo "swarm-nfs-plugin: on_compose"
+        echo "${1}, ${2}"
 }
