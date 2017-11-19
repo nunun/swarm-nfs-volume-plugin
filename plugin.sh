@@ -16,7 +16,7 @@ configure_exports_file() {
                 for a in ${SWARM_NFS_PLUGIN_CLIENT_IP}; do
                         EXPORTS="${EXPORTS} ${a}(rw,sync,no_subtree_check,no_root_squash)"
                 done
-                EXPORTS="${EXPORTS}"$'\n'
+                EXPORTS="${EXPORTS}\n"
         done
         if [ -f "${EXPORTS_FILE}" ]; then
                 if [ ! -f "${EXPORTS_BACKUP_FILE}" ]; then
@@ -26,7 +26,7 @@ configure_exports_file() {
                 fi
         fi
         sudo mkdir -pv "${SWARM_NFS_PLUGIN_EXPORT_DIR}"
-        echo ${EXPORTS} | sudo tee "${EXPORTS_FILE}"
+        echo -e ${EXPORTS} | sudo tee "${EXPORTS_FILE}"
 }
 
 configure_compose_file() {
