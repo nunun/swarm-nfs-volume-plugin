@@ -1,4 +1,3 @@
-CWD=$(cd `dirname ${0}`; pwd)
 SWARM_NFS_PLUGIN_SERVER_IP="${SWARM_NFS_PLUGIN_SERVER_IP:-"127.0.0.1"}"
 SWARM_NFS_PLUGIN_CLIENT_IP="${SWARM_NFS_PLUGIN_CLIENT_IP:-"127.0.0.1"}"
 SWARM_NFS_PLUGIN_VOLUMES="${SWARM_NFS_PLUGIN_VOLUMES:-"nfs_volume"}"
@@ -27,7 +26,8 @@ configure_exports_file() {
 }
 
 configure_compose_file() {
-        local yaml_file="${CWD}/docker-compose.yml"
+        local dir="${1}"
+        local yaml_file="${dir}/docker-compose.yml"
         echo "version: ${SWARM_NFS_PLUGIN_COMPOSE_VERSION}"              >  ${yaml_file}
         echo "volumes: "                                                 >> ${yaml_file}
         for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
@@ -43,8 +43,9 @@ configure_compose_file() {
 on_install() {
         echo "swarm-nfs-plugin: on_install"
         sudo apt-get install nfs-server
+        local dir="${1}"
         configure_exports_file
-        configure_compose_file
+        configure_compose_file "${dir}"
         sudo /etc/init.d/nfs-kernel-server start
 }
 
@@ -57,6 +58,6 @@ on_uninstall() {
 on_update() {
         echo "swarm-plugin-test: on_update"
         configure_exports_file
-        configure_compose_file
+        configure_compose_file "${dir}"
         sudo /etc/init.d/nfs-kernel-server restart
 }
