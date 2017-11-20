@@ -31,21 +31,47 @@ configure_exports_file() {
 
 configure_compose_file() {
         local dir="${1}"
-        local yaml_file="${dir}/docker-compose.yml"
-        echo "version: \"${SWARM_NFS_PLUGIN_COMPOSE_VERSION}\""           >  ${yaml_file}
-        echo "volumes: "                                                  >> ${yaml_file}
-        for v in ${SWARM_NFS_PLUGIN_VOLUMES}; do
-                echo "  ${v}:"                                            >> ${yaml_file}
-                echo "    driver: local"                                  >> ${yaml_file}
-                echo "    driver_opts:"                                   >> ${yaml_file}
-                echo "      type: nfs4"                                   >> ${yaml_file}
-                echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"     >> ${yaml_file}
-                echo "      device: :${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}" >> ${yaml_file}
+        local compose_yml="${2}"
+        local volumes_yml="${dir}/volumes.yml"
+        local merging_yml="${dir}/merging.yml"
+        local volumes=`docker-compose -f "${compose_yml}" config --volumes`
+        local exports=""
 
-                # NOTE
-                # remove directory manually if you want to uninstall.
-                sudo mkdir -p "${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
+        # create volumes.yml
+        echo "version: \"${SWARM_NFS_PLUGIN_COMPOSE_VERSION}\"" >  ${volumes_yml}
+        echo "volumes: "                                        >> ${volumes_yml}
+        for v in ${volumes}; do
+                local found=""
+                for f in ${SWARM_NFS_PLUGIN_VOLUMES}; do
+                        if [ "${v}" = "${f}" ]; then
+                                found="1"
+                                break
+                        fi
+                done
+                if [ -n "${found}" ]; then
+                        echo "  ${v}:"                                            >> ${volumes_yml}
+                        echo "    driver: local"                                  >> ${volumes_yml}
+                        echo "    driver_opts:"                                   >> ${volumes_yml}
+                        echo "      type: nfs4"                                   >> ${volumes_yml}
+                        echo "      o: addr=${SWARM_NFS_PLUGIN_SERVER_IP},rw"     >> ${volumes_yml}
+                        echo "      device: :${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}" >> ${volumes_yml}
+
+                        # NOTE
+                        # remove directory manually if you want to uninstall.
+                        sudo mkdir -p "${SWARM_NFS_PLUGIN_EXPORT_DIR}/${v}"
+
+                        # NOTE
+                        # add to exports
+                        exports="${exports} ${v}"
+                fi
         done
+
+        # merge .current.yml and volumes.yml into .current.yml.
+        if [ -n "${exports}" ]; then
+                docker-compose -f "${compose_yml}" -f "${volumes_yml}" config > "${merging_yml}"
+                cp "${merging_yml}" "${compose_yml}"
+                echo "volumes for nfs overwrite:${exports}"
+        fi
 }
 
 on_install() {
@@ -53,7 +79,6 @@ on_install() {
         sudo apt-get install nfs-server
         local dir="${1}"
         configure_exports_file
-        configure_compose_file "${dir}"
         sudo /etc/init.d/nfs-kernel-server start
 }
 
@@ -66,11 +91,12 @@ on_uninstall() {
 on_update() {
         echo "swarm-nfs-plugin: on_update"
         configure_exports_file
-        configure_compose_file "${dir}"
         sudo /etc/init.d/nfs-kernel-server restart
 }
 
 on_compose() {
         echo "swarm-nfs-plugin: on_compose"
-        echo "${1}, ${2}"
+        local dir="${1}"
+        local compose_yml="${2}"
+        configure_compose_file "${dir}" "${compose_yml}"
 }
