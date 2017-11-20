@@ -6,6 +6,33 @@ SWARM_NFS_PLUGIN_COMPOSE_VERSION="3.0"
 EXPORTS_FILE="/etc/exports"
 EXPORTS_BACKUP_FILE="/etc/exports.bak"
 
+on_install() {
+        echo "swarm-nfs-plugin: on_install (${*})"
+        sudo apt-get install nfs-server
+        local dir="${1}"
+        configure_exports_file
+        sudo /etc/init.d/nfs-kernel-server start
+}
+
+on_uninstall() {
+        echo "swarm-nfs-plugin: on_uninstall (${*})"
+        sudo /etc/init.d/nfs-kernel-server stop
+        sudo apt-get remove nfs-server
+}
+
+on_update() {
+        echo "swarm-nfs-plugin: on_update (${*})"
+        configure_exports_file
+        sudo /etc/init.d/nfs-kernel-server restart
+}
+
+on_compose() {
+        echo "swarm-nfs-plugin: on_compose (${*})"
+        local dir="${1}"
+        local compose_yml="${2}"
+        configure_compose_file "${dir}" "${compose_yml}"
+}
+
 configure_exports_file() {
         if [ -z "${SWARM_NFS_PLUGIN_CLIENT_IP}" ]; then
                 abort "environment vairable 'SWARM_NFS_PLUGIN_CLIENT_IP' is empty."
@@ -70,33 +97,9 @@ configure_compose_file() {
         if [ -n "${exports}" ]; then
                 docker-compose -f "${compose_yml}" -f "${volumes_yml}" config > "${merging_yml}"
                 cp "${merging_yml}" "${compose_yml}"
-                echo "volumes for nfs overwrite:${exports}"
+                echo "use nfs volumes ...${exports}"
+                echo "compose updated."
         fi
 }
 
-on_install() {
-        echo "swarm-nfs-plugin: on_install"
-        sudo apt-get install nfs-server
-        local dir="${1}"
-        configure_exports_file
-        sudo /etc/init.d/nfs-kernel-server start
-}
 
-on_uninstall() {
-        echo "swarm-nfs-plugin: on_uninstall"
-        sudo /etc/init.d/nfs-kernel-server stop
-        sudo apt-get remove nfs-server
-}
-
-on_update() {
-        echo "swarm-nfs-plugin: on_update"
-        configure_exports_file
-        sudo /etc/init.d/nfs-kernel-server restart
-}
-
-on_compose() {
-        echo "swarm-nfs-plugin: on_compose"
-        local dir="${1}"
-        local compose_yml="${2}"
-        configure_compose_file "${dir}" "${compose_yml}"
-}
