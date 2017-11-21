@@ -97,7 +97,7 @@ configure_compose_file() {
         if [ -n "${exports}" ]; then
                 docker-compose -f "${compose_yml}" -f "${volumes_yml}" config > "${merging_yml}"
                 cp "${merging_yml}" "${compose_yml}"
-                echo "use nfs volumes ...${exports}"
+                echo "nfs volumes are added to compose:${exports}"
                 echo "compose updated."
         fi
 }
