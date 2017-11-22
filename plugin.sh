@@ -1,6 +1,6 @@
-SWARM_NFS_VOLUME_PLUGIN_SERVER_IP="${SWARM_NFS_VOLUME_PLUGIN_SERVER_IP:-"127.0.0.1"}"
-SWARM_NFS_VOLUME_PLUGIN_CLIENT_IP="${SWARM_NFS_VOLUME_PLUGIN_CLIENT_IP:-"127.0.0.1"}"
-SWARM_NFS_VOLUME_PLUGIN_VOLUMES="${SWARM_NFS_VOLUME_PLUGIN_VOLUMES:-"nfs_volume"}"
+SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP="${SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP:-"127.0.0.1"}"
+SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP="${SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP:-"127.0.0.1"}"
+SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES="${SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES:-"nfs_volume"}"
 SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR="${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR:-"/exports/swarm-nfs-plugin"}"
 SWARM_NFS_VOLUME_PLUGIN_COMPOSE_VERSION="3.0"
 EXPORTS_FILE="/etc/exports"
@@ -34,13 +34,13 @@ on_compose() {
 }
 
 configure_exports_file() {
-        if [ -z "${SWARM_NFS_VOLUME_PLUGIN_CLIENT_IP}" ]; then
-                abort "environment vairable 'SWARM_NFS_VOLUME_PLUGIN_CLIENT_IP' is empty."
+        if [ -z "${SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP}" ]; then
+                abort "environment vairable 'SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP' is empty."
         fi
         EXPORTS=""
-        for v in ${SWARM_NFS_VOLUME_PLUGIN_VOLUMES}; do
+        for v in ${SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES}; do
                 EXPORTS="${EXPORTS}${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR}/${v}"
-                for a in ${SWARM_NFS_VOLUME_PLUGIN_CLIENT_IP}; do
+                for a in ${SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP}; do
                         EXPORTS="${EXPORTS} ${a}(rw,sync,no_subtree_check,no_root_squash)"
                 done
                 EXPORTS="${EXPORTS}\n"
@@ -69,7 +69,7 @@ configure_compose_file() {
         echo "volumes: "                                        >> ${volumes_yml}
         for v in ${volumes}; do
                 local found=""
-                for f in ${SWARM_NFS_VOLUME_PLUGIN_VOLUMES}; do
+                for f in ${SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES}; do
                         if [ "${v}" = "${f}" ]; then
                                 found="1"
                                 break
@@ -80,7 +80,7 @@ configure_compose_file() {
                         echo "    driver: local"                                  >> ${volumes_yml}
                         echo "    driver_opts:"                                   >> ${volumes_yml}
                         echo "      type: nfs4"                                   >> ${volumes_yml}
-                        echo "      o: addr=${SWARM_NFS_VOLUME_PLUGIN_SERVER_IP},rw"     >> ${volumes_yml}
+                        echo "      o: addr=${SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP},rw"     >> ${volumes_yml}
                         echo "      device: :${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR}/${v}" >> ${volumes_yml}
 
                         # NOTE
