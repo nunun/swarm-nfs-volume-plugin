@@ -7,7 +7,7 @@ EXPORTS_FILE="/etc/exports"
 EXPORTS_BACKUP_FILE="/etc/exports.bak"
 
 on_install() {
-        echo "swarm-nfs-plugin: on_install (${*})"
+        echo "swarm-nfs-volume-plugin: on_install (${*})"
         sudo apt-get install nfs-server
         local dir="${1}"
         configure_exports_file
@@ -15,19 +15,19 @@ on_install() {
 }
 
 on_uninstall() {
-        echo "swarm-nfs-plugin: on_uninstall (${*})"
+        echo "swarm-nfs-volume-plugin: on_uninstall (${*})"
         sudo /etc/init.d/nfs-kernel-server stop
         sudo apt-get remove nfs-server
 }
 
 on_update() {
-        echo "swarm-nfs-plugin: on_update (${*})"
+        echo "swarm-nfs-volume-plugin: on_update (${*})"
         configure_exports_file
         sudo /etc/init.d/nfs-kernel-server restart
 }
 
 on_compose() {
-        echo "swarm-nfs-plugin: on_compose (${*})"
+        echo "swarm-nfs-volume-plugin: on_compose (${*})"
         local dir="${1}"
         local compose_yml="${2}"
         configure_compose_file "${dir}" "${compose_yml}"
