@@ -1,13 +1,13 @@
 SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP="${SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP:-"127.0.0.1"}"
 SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP="${SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP:-"127.0.0.1"}"
-SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES="${SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES:-"nfs_volume"}"
+SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES="${SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES:-"nfs_volume"}"
 SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR="${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR:-"/exports/swarm-nfs-plugin"}"
 SWARM_NFS_VOLUME_PLUGIN_COMPOSE_VERSION="3.0"
 EXPORTS_FILE="/etc/exports"
 EXPORTS_BACKUP_FILE="/etc/exports.bak"
 
 on_install() {
-        echo "swarm-nfs-volume-plugin: on_install (${*})"
+        log_debug "swarm-nfs-volume-plugin: on_install (${*})"
         sudo apt-get install nfs-server
         local dir="${1}"
         configure_exports_file
@@ -15,19 +15,19 @@ on_install() {
 }
 
 on_uninstall() {
-        echo "swarm-nfs-volume-plugin: on_uninstall (${*})"
+        log_debug "swarm-nfs-volume-plugin: on_uninstall (${*})"
         sudo /etc/init.d/nfs-kernel-server stop
         sudo apt-get remove nfs-server
 }
 
 on_update() {
-        echo "swarm-nfs-volume-plugin: on_update (${*})"
+        log_debug "swarm-nfs-volume-plugin: on_update (${*})"
         configure_exports_file
         sudo /etc/init.d/nfs-kernel-server restart
 }
 
 on_compose() {
-        echo "swarm-nfs-volume-plugin: on_compose (${*})"
+        log_debug "swarm-nfs-volume-plugin: on_compose (${*})"
         local dir="${1}"
         local compose_yml="${2}"
         configure_compose_file "${dir}" "${compose_yml}"
@@ -38,7 +38,7 @@ configure_exports_file() {
                 abort "environment vairable 'SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP' is empty."
         fi
         EXPORTS=""
-        for v in ${SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES}; do
+        for v in ${SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES}; do
                 EXPORTS="${EXPORTS}${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR}/${v}"
                 for a in ${SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP}; do
                         EXPORTS="${EXPORTS} ${a}(rw,sync,no_subtree_check,no_root_squash)"
@@ -47,8 +47,8 @@ configure_exports_file() {
         done
         if [ -f "${EXPORTS_FILE}" ]; then
                 if [ ! -f "${EXPORTS_BACKUP_FILE}" ]; then
-                        echo "${EXPORTS_FILE} already exists."
-                        echo "backup to ${EXPORTS_BACKUP_FILE} ..."
+                        log_info "${EXPORTS_FILE} already exists."
+                        log_info "backup to ${EXPORTS_BACKUP_FILE} ..."
                         sudo cp -v "${EXPORTS_FILE}" "${EXPORTS_BACKUP_FILE}"
                 fi
         fi
@@ -69,7 +69,7 @@ configure_compose_file() {
         echo "volumes: "                                        >> ${volumes_yml}
         for v in ${volumes}; do
                 local found=""
-                for f in ${SWARM_NFS_VOLUME_PLUGIN_TARGET_VOLUMES}; do
+                for f in ${SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES}; do
                         if [ "${v}" = "${f}" ]; then
                                 found="1"
                                 break
@@ -97,9 +97,7 @@ configure_compose_file() {
         if [ -n "${exports}" ]; then
                 docker-compose -f "${compose_yml}" -f "${volumes_yml}" config > "${merging_yml}"
                 cp "${merging_yml}" "${compose_yml}"
-                echo "nfs volumes are added to compose:${exports}"
-                echo "compose updated."
+                log_info "nfs volumes are added to compose:${exports}"
+                log_info "compose updated."
         fi
 }
-
-
