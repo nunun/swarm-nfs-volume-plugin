@@ -2,7 +2,7 @@ SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP="${SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP:-
 SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP="${SWARM_NFS_VOLUME_PLUGIN_NFS_CLIENT_IP:-"127.0.0.1"}"
 SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES="${SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES:-"nfs_volume"}"
 SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR="${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR:-"/exports/swarm-nfs-plugin"}"
-SWARM_NFS_VOLUME_PLUGIN_COMPOSE_VERSION="3.0"
+SWARM_NFS_VOLUME_PLUGIN_VOLUME_LABEL="${SWARM_NFS_VOLUME_PLUGIN_VOLUME_LABEL:-"swarm-nfs-volume"}"
 EXPORTS_FILE="/etc/exports"
 EXPORTS_BACKUP_FILE="/etc/exports.bak"
 
@@ -18,6 +18,8 @@ on_install() {
 
 on_uninstall() {
         log_debug "swarm-nfs-volume-plugin: on_uninstall (${*})"
+        remove_nfs_volumes
+        sleep 3 # NOTE sleep a moment ...
         sudo /etc/init.d/nfs-kernel-server stop
         sudo apt-get remove nfs-server
 }
@@ -70,6 +72,23 @@ configure_exports_file() {
 
 configure_nfs_volumes() {
         log_debug "build_nfs_volumes()"
+
+        # at first, remove nfs volumes.
+        remove_nfs_volumes
+
+        # then, create nfs volumes.
+        log_info "creating nfs volumes labelled '${SWARM_NFS_VOLUME_PLUGIN_VOLUME_LABEL}' to all nodes ..."
+        for v in ${SWARM_NFS_VOLUME_PLUGIN_NFS_EXTERNAL_VOLUMES}; do
+                log_info "volume '${v}' ... (${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR}/${v} on ${SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP} by nfs4)"
+                swarm_pssh "docker volume create --name ${v} --driver local --opt type=nfs4 --opt o=addr=${SWARM_NFS_VOLUME_PLUGIN_NFS_SERVER_IP},rw --opt device=:${SWARM_NFS_VOLUME_PLUGIN_EXPORT_DIR}/${v} --label=${SWARM_NFS_VOLUME_PLUGIN_VOLUME_LABEL}"
+        done
+        log_info "done."
+}
+
+remove_nfs_volumes() {
+        log_info "removing nfs volumes labelled '${SWARM_NFS_VOLUME_PLUGIN_VOLUME_LABEL}' from all nodes ..."
+        swarm_pssh --inline "docker volume rm \`docker ls --filter=\"label=swarm-nfs-volume\"\`" \
+                > /tmp/swarm-nfs-volume-plugin.remove.log || log_info "done."
 }
 
 #local dir="${1}"
