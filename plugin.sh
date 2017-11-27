@@ -100,8 +100,9 @@ remove_nfs_volumes() {
         local host="${1}"
         local args="${host:+"arbitrary -H "}${host}"
         log_info "removing nfs volumes labelled '${SWARM_NFS_VOLUME_PLUGIN_VOLUME_LABEL}' ..."
-        swarm_pssh ${args} --inline "docker volume rm \`docker ls --f label=swarm-nfs-volume\`" \
-                > /tmp/swarm-nfs-volume-plugin.remove.log || log_info "done."
+        swarm_pssh ${args} --inline "docker volume rm \`docker volume ls -q -f label=swarm-nfs-volume\`" \
+                > /tmp/swarm-nfs-volume-plugin.remove.log || :
+        log_info "done."
 }
 
 #local dir="${1}"
