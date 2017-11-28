@@ -44,16 +44,6 @@ on_unterraform() {
         [ -n "${host}" ] && remove_nfs_volumes "${host}"
 }
 
-on_update() {
-        log_debug "swarm-nfs-volume-plugin: on_update (${*})"
-        # nothing to do
-}
-
-on_compose() {
-        log_debug "swarm-nfs-volume-plugin: on_compose (${*})"
-        # nothing to do
-}
-
 ###############################################################################
 ###############################################################################
 ###############################################################################
