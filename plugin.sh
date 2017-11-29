@@ -32,18 +32,6 @@ on_reinstall() {
         create_nfs_volumes
 }
 
-on_terraform() {
-        log_debug "swarm-nfs-volume-plugin: on_terraform (${*})"
-        local host="${2}"
-        [ -n "${host}" ] && create_nfs_volumes "${host}"
-}
-
-on_unterraform() {
-        log_debug "swarm-nfs-volume-plugin: on_unterraform (${*})"
-        local host="${2}"
-        [ -n "${host}" ] && remove_nfs_volumes "${host}"
-}
-
 ###############################################################################
 ###############################################################################
 ###############################################################################
